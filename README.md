@@ -1,3 +1,5 @@
+# Build Status Badge: ![](https://github.com/ObinnaOkoye89/python-web-app-cicd-status_badge/workflows/Pipeline/badge.svg)
+
 # Chapter 04_06
 
 - Create a repository on GitHub using the [New Repository](https://github.com/new) page.  Name it something that relates to the lesson like `exercise-files`.
