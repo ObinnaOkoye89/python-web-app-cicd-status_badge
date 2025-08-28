@@ -1,6 +1,7 @@
 name: Pipeline
 
 on: [push]
+
 env:
   APPLICATION_NAME: app2
 jobs:
@@ -9,23 +10,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      
       - name: Setup Python environment
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
+          
       - name: Install requirements
         run: pip install --quiet --requirement requirements.txt
-
       - name: Lint code
         run: |
           flake8 --ignore=E501,E231 *.py
           pylint --disable=C0301 --disable=C0326 *.py
-    
       - name: Run unit tests
         run: |
-          python -m unittest --verbose --failfast        
+          python -m unittest --verbose --failfast
 
   build_image:
     needs: [lint]
@@ -37,12 +36,12 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: $${{ secrets.GCP_SERVICE_ACCT_KEY }}
-        
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCT_KEY }}
+      
       - name: Set up GCloud
-        uses: google-github-actions/setup-gcloud@v2 
+        uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: {{ secrets.GCP_PROJECT_ID }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Configure GCloud
         run: |
@@ -50,10 +49,10 @@ jobs:
           gcloud config set run/region ${{ secrets.GCP_REGION }}
           gcloud auth configure-docker gcr.io
           gcloud info
-    
+  
       - name: Build and tag image
         run: docker build -t "gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.APPLICATION_NAME }}:latest" .
-      
+  
       - name: Push to GCP image registry
         run: docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.APPLICATION_NAME }}:latest
 
@@ -75,11 +74,11 @@ jobs:
         run: |
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
           gcloud config set run/region ${{ secrets.GCP_REGION }}
-          gcloud auth configure-docker
+          gcloud auth configure-docker gcr.io
           gcloud info
-      
+
       - name: Run unit tests in container
-        run: docker run --rm "gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.APPLICATION_NAME }}" -m unittest --verbose --failfast
+        run: docker run --rm "gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.APPLICATION_NAME }}" -m unittest discover -v --failfast
 
   deploy:
     needs: [test_image]
